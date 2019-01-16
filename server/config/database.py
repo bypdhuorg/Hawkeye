@@ -35,5 +35,9 @@ if os.environ.get('REDIS_PASSWORD'):
     REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 else:
     REDIS_PASSWORD = None
+if os.environ.get('REDIS_DB'):
+    REDIS_DB = int(os.environ.get('REDIS_DB'))
+else:
+    REDIS_DB = 1
 result_cache = Redis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD,
-                     db=1, decode_responses=True)
+                     db=REDIS_DB, decode_responses=True)
