@@ -2,7 +2,9 @@ FROM python:3.7
 LABEL MAINTAINER=0xbug
 ENV TZ=Asia/Shanghai
 EXPOSE 80
-RUN apt-get update && apt-get install --no-install-recommends -y curl gnupg git redis-server supervisor software-properties-common wget
+RUN apt-get update && apt-get install --no-install-recommends -y curl gnupg git python-software-properties
+RUN add-apt-repository ppa:rwky/redis && apt-get update && apt-get install --no-install-recommends -y redis-server
+RUN apt-get update && apt-get install --no-install-recommends -y supervisor software-properties-common wget
 RUN curl https://openresty.org/package/pubkey.gpg | apt-key add -
 RUN add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
 RUN apt-get update && apt-get install -y openresty
