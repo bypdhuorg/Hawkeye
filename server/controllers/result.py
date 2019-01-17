@@ -12,7 +12,8 @@ class Leakage(Resource):
         parser.add_argument('language', type=str, help='')
         parser.add_argument('limit', type=int, default=10, help='')
         parser.add_argument('from', type=int, default=1, help='')
-        args = parser.parse_args()
+        # args = parser.parse_args()
+        args = {'status': '{}', 'tag': '', 'language': '', 'limit': 1, 'from': 210}
         status = json.loads(args.get('status'))
         filters = status
         if args.get('tag'):

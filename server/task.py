@@ -2,6 +2,8 @@ import datetime
 import os
 import re
 import random
+
+import math
 import requests
 import smtplib
 import time
@@ -256,7 +258,7 @@ def new_github():
     else:
         logger.error('请配置github账号')
         return
-    github_account = random.choice(list(github_col.find({"rate_limit":{"$gt":5}}).sort('rate_remaining', DESCENDING)))
+    github_account = random.choice(list(github_col.find({"rate_limit": {"$gt": 5}}).sort('rate_remaining', DESCENDING)))
     github_username = github_account.get('username')
     github_password = github_account.get('password')
     g = Github(github_username, github_password)
@@ -282,9 +284,11 @@ def check():
     if setting_col.count({'key': 'task', 'page': {'$exists': True}}):
         setting_col.update_one({'key': 'task'}, {'$set': {'pid': os.getpid()}})
         page = int(setting_col.find_one({'key': 'task'}).get('page'))
+
         for p in range(0, page):
             for query in query_col.find({'enabled': True}).sort('last', ASCENDING):
-                github_account = random.choice(list(github_col.find({"rate_limit":{"$gt":5}}).sort('rate_remaining', DESCENDING)))
+                github_account = random.choice(
+                    list(github_col.find({"rate_limit": {"$gt": 5}}).sort('rate_remaining', DESCENDING)))
                 github_username = github_account.get('username')
                 github_password = github_account.get('password')
                 rate_remaining = github_account.get('rate_remaining')
@@ -292,7 +296,30 @@ def check():
                 logger.info(rate_remaining)
                 g = Github(github_username, github_password,
                            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36')
-                search.schedule(args=(query, p, g, github_username),
+
+                # total = query.get('total')
+                # if total is None:
+                #     repos = g.search_code(query=query.get('keyword'),
+                #                           sort="indexed", order="desc")
+                #     total = repos.totalCount
+                repos = g.search_code(query=query.get('keyword'),
+                                      sort="indexed", order="desc")
+                api_total = query.get('api_total')
+                if api_total:
+                    total = api_total
+                else:
+                    total = repos.totalCount
+                page_pre = int(query.get('page_pre')) if query.get('page_pre') is not None else -1
+                page_all = math.ceil(total / 30)
+                if page_all == 0:
+                    continue
+                if page_pre + 1 >= page_all:
+                    page_pre = -1
+                page_now = page_pre + 1
+                query_col.update_one({'_id': query.get('_id')},
+                                     {'$set': {'total': total, 'page_pre': page_now}})
+
+                search.schedule(args=(query, page_now, g, github_username),
                                 delay=huey.pending_count() + huey.scheduled_count())
     else:
         logger.error('请在页面上配置任务参数')
