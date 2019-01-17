@@ -2,6 +2,11 @@ FROM python:3.7
 LABEL MAINTAINER=0xbug
 ENV TZ=Asia/Shanghai
 EXPOSE 80
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    echo "deb http://mirrors.163.com/debian/ jessie main non-free contrib" >/etc/apt/sources.list && \
+    echo "deb http://mirrors.163.com/debian/ jessie-proposed-updates main non-free contrib" >>/etc/apt/sources.list && \
+    echo "deb-src http://mirrors.163.com/debian/ jessie main non-free contrib" >>/etc/apt/sources.list && \
+    echo "deb-src http://mirrors.163.com/debian/ jessie-proposed-updates main non-free contrib" >>/etc/apt/sources.list
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y curl gnupg git redis-server supervisor software-properties-common wget
 RUN curl https://openresty.org/package/pubkey.gpg | apt-key add -
