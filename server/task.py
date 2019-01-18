@@ -21,6 +21,7 @@ from utils.notice import mail_notice
 huey = RedisHuey('hawkeye', host=REDIS_HOST, port=int(REDIS_PORT))
 base_path = os.path.split(os.path.realpath(__file__))[0]
 extract = tldextract.TLDExtract(cache_file='{}/.tld_set'.format(base_path))
+PER_PAGE = 50
 
 if setting_col.count({'key': 'task', 'minute': {'$exists': True}, 'page': {'$exists': True}}):
     minute = int(setting_col.find_one({'key': 'task'}).get('minute'))
@@ -128,7 +129,7 @@ def search(query, page, g, github_username):
         query.get('tag'), query.get('keyword'), page + 1))
     query_col.update_one({'tag': query.get('tag')},
                          {'$set': {'last': int(time.time()), 'status': 1, 'reason': '抓取第{}页成功'.format(page),
-                                   'api_total': repos.totalCount,
+                                   'api_total': repos.totalCount, 'page_pre': page,
                                    'found_total': result_col.count({'tag': query.get('tag')})}})
     if setting_col.count({'key': 'mail', 'enabled': True}) and len(mail_notice_list):
         main_content = '<h2>规则名称: {}</h2><br>{}'.format(query.get('tag'), '<br>'.join(mail_notice_list))
@@ -261,7 +262,7 @@ def new_github():
     github_account = random.choice(list(github_col.find({"rate_limit": {"$gt": 5}}).sort('rate_remaining', DESCENDING)))
     github_username = github_account.get('username')
     github_password = github_account.get('password')
-    g = Github(github_username, github_password)
+    g = Github(github_username, github_password, per_page=PER_PAGE)
     return g, github_username
 
 
@@ -294,7 +295,7 @@ def check():
                 rate_remaining = github_account.get('rate_remaining')
                 logger.info(github_username)
                 logger.info(rate_remaining)
-                g = Github(github_username, github_password,
+                g = Github(github_username, github_password, per_page=PER_PAGE,
                            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36')
 
                 # total = query.get('total')
@@ -302,12 +303,12 @@ def check():
                 #     repos = g.search_code(query=query.get('keyword'),
                 #                           sort="indexed", order="desc")
                 #     total = repos.totalCount
-                repos = g.search_code(query=query.get('keyword'),
-                                      sort="indexed", order="desc")
                 api_total = query.get('api_total')
                 if api_total:
                     total = api_total
                 else:
+                    repos = g.search_code(query=query.get('keyword'),
+                                          sort="indexed", order="desc")
                     total = repos.totalCount
                 page_pre = int(query.get('page_pre')) if query.get('page_pre') is not None else -1
                 page_all = math.ceil(total / 30)
@@ -316,8 +317,6 @@ def check():
                 if page_pre + 1 >= page_all:
                     page_pre = -1
                 page_now = page_pre + 1
-                query_col.update_one({'_id': query.get('_id')},
-                                     {'$set': {'total': total, 'page_pre': page_now}})
 
                 search.schedule(args=(query, page_now, g, github_username),
                                 delay=huey.pending_count() + huey.scheduled_count())
