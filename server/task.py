@@ -119,11 +119,11 @@ def search(query, page, g, github_username):
                 page_num += 1
 
     except Exception as error:
-        if 'Not Found' not in error.data:
-            g, github_username = new_github()
-            search.schedule(
-                args=(query, page, g, github_username),
-                delay=huey.pending_count() + huey.scheduled_count())
+        # if 'Not Found' not in error.data:
+        #     g, github_username = new_github()
+        #     search.schedule(
+        #         args=(query, page, g, github_username),
+        #         delay=huey.pending_count() + huey.scheduled_count())
         logger.critical(error)
         logger.error('抓取: tag is {} keyword is {}, page is {} page_num is {} 失败'.format(
             query.get('tag'), query.get('keyword'), page + 1, page_num))
