@@ -52,6 +52,7 @@ def search(query, page, g, github_username):
         logger.critical("触发限制啦")
         return
     try:
+        page_num = 1
         for repo in repos.get_page(page):
             setting_col.update_one({'key': 'task'}, {'$set': {'key': 'task', 'pid': os.getpid(), 'last': timestamp()}},
                                    upsert=True)
@@ -114,6 +115,9 @@ def search(query, page, g, github_username):
                     logger.info('已存在')
 
                 logger.info('抓取关键字：{} {}'.format(query.get('tag'), leakage.get('link')))
+                logger.info('================================= page {}, page_num {}'.format(page, page_num))
+                page_num += 1
+
     except Exception as error:
         if 'Not Found' not in error.data:
             g, github_username = new_github()
