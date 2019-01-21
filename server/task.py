@@ -316,7 +316,7 @@ def check():
                     total = repos.totalCount
                 page_pre = int(query.get('page_pre')) if query.get('page_pre') is not None else -1
                 total = total if total <= 1000 else 1000
-                page_all = math.ceil(total / 30)
+                page_all = math.ceil(total / PER_PAGE)
                 if page_all == 0:
                     continue
                 if page_pre + 1 >= page_all:
