@@ -56,7 +56,7 @@ def search(query, page, g, github_username):
         for repo in repos.get_page(page):
             setting_col.update_one({'key': 'task'}, {'$set': {'key': 'task', 'pid': os.getpid(), 'last': timestamp()}},
                                    upsert=True)
-            if not result_col.count({'_id': repo.sha}):
+            if not result_col.count({'link': repo.html_url}):
                 try:
                     code = str(repo.content).replace('\n', '')
                 except:
@@ -65,7 +65,8 @@ def search(query, page, g, github_username):
                     'link': repo.html_url,
                     'project': repo.repository.full_name,
                     'project_url': repo.repository.html_url,
-                    '_id': repo.sha,
+                    # '_id': repo.sha,
+                    'sha': repo.sha,
                     'language': repo.repository.language,
                     'username': repo.repository.owner.login,
                     'avatar_url': repo.repository.owner.avatar_url,
@@ -108,11 +109,14 @@ def search(query, page, g, github_username):
                         '[{}/{}]({}) 上传于 {}'.format(leakage.get('project').split('.')[-1],
                                                     leakage.get('filename'), leakage.get('link'),
                                                     leakage.get('datetime')))
-                try:
-                    result_col.insert_one(leakage)
-                    logger.info(leakage.get('project'))
-                except errors.DuplicateKeyError:
-                    logger.info('已存在')
+
+                r = result_col.find_one({'link': repo.html_url})
+                if not r:
+                    try:
+                        result_col.insert_one(leakage)
+                        logger.info(leakage.get('project'))
+                    except errors.DuplicateKeyError:
+                        logger.info('已存在')
 
                 logger.info('抓取关键字：{} {}'.format(query.get('tag'), leakage.get('link')))
                 logger.info('================================= page {}, page_num {}'.format(page + 1, page_num))
