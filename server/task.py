@@ -133,7 +133,7 @@ def search(query, page, g, github_username):
         query.get('tag'), query.get('keyword'), page + 1))
     query_col.update_one({'tag': query.get('tag')},
                          {'$set': {'last': int(time.time()), 'status': 1, 'reason': '抓取第{}页成功'.format(page),
-                                   'api_total': repos.totalCount, 'page_pre': page,
+                                   'api_total': repos.totalCount,
                                    'found_total': result_col.count({'tag': query.get('tag')})}})
     if setting_col.count({'key': 'mail', 'enabled': True}) and len(mail_notice_list):
         main_content = '<h2>规则名称: {}</h2><br>{}'.format(query.get('tag'), '<br>'.join(mail_notice_list))
@@ -322,6 +322,8 @@ def check():
                 if page_pre + 1 >= page_all:
                     page_pre = -1
                 page_now = page_pre + 1
+
+                query_col.update_one({'tag': query.get('tag')}, {'$set': {'page_pre': page_now}})
 
                 search.schedule(args=(query, page_now, g, github_username),
                                 delay=huey.pending_count() + huey.scheduled_count())
