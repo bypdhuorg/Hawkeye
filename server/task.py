@@ -56,7 +56,7 @@ def search(query, page, g, github_username):
         for repo in repos.get_page(page):
             setting_col.update_one({'key': 'task'}, {'$set': {'key': 'task', 'pid': os.getpid(), 'last': timestamp()}},
                                    upsert=True)
-            if not result_col.count({'link': repo.html_url}):
+            if not result_col.count({'project_url': repo.repository.html_url, 'filepath': repo.path}):
                 try:
                     code = str(repo.content).replace('\n', '')
                 except:
@@ -110,7 +110,7 @@ def search(query, page, g, github_username):
                                                     leakage.get('filename'), leakage.get('link'),
                                                     leakage.get('datetime')))
 
-                r = result_col.find_one({'link': repo.html_url})
+                r = result_col.find_one({'project_url': repo.repository.html_url, 'filepath': repo.path})
                 if not r:
                     try:
                         result_col.insert_one(leakage)
