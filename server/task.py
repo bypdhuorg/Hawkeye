@@ -128,6 +128,7 @@ def search(query, page, g, github_username):
         logger.error('抓取: tag is {} keyword is {}, page is {} page_num is {} 失败'.format(
             query.get('tag'), query.get('keyword'), page + 1, page_num))
 
+        query_col.update_one({'tag': query.get('tag')}, {'page_pre', page - 1})
         return
     logger.info('抓取: tag is {} keyword is {}, page is {} 成功'.format(
         query.get('tag'), query.get('keyword'), page + 1))
