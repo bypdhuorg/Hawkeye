@@ -66,7 +66,7 @@ def search(query, page, g, github_username):
                     'link': repo.html_url,
                     'project': repo.repository.full_name,
                     'project_url': repo.repository.html_url,
-                    '_id': uuid.uuid1(),
+                    '_id': str(uuid.uuid1()),
                     'sha': repo.sha,
                     'language': repo.repository.language,
                     'username': repo.repository.owner.login,
